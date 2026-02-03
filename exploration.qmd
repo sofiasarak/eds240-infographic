@@ -9,6 +9,7 @@ library(tidyverse)
 library(readxl)
 library(here)
 library(ggplot2)
+library(janitor)
 ```
 
 ## Loading in data
@@ -48,7 +49,7 @@ for (i in 1:nrow(sheets)){
 
 Access from downloaded csv (after having initially downloaded them)
 ```{r}
-
+country_tree_loss <- read_csv(here("data", "forest-carbon", "country_tree_loss.csv"))
 ```
 
 ## Pivoting longer
@@ -67,7 +68,7 @@ country_tree_loss_long <- country_tree_loss_long %>%
          year_factor = as.factor(year))
 ```
 
-## Exploratory Viz
+## Exploratory Viz -- Tree Loss
 ```{r}
 ggplot(data = country_tree_loss_long, aes(x = year_factor, y = total_loss_ha)) +
   geom_col()
@@ -81,3 +82,79 @@ ggplot(data = country_tree_loss_long, aes(x = year, y = total_loss_ha)) +
   theme_minimal() +
   scale_y_continuous(labels = scales::comma)
 ```
+
+## Exploratory Viz -- Sunflowers
+
+```{r}
+sunflower_oil <- read_csv(here("data", "production-of-sunflower-oil", "production-of-sunflower-oil.csv")) %>% 
+  clean_names()
+```
+
+```{r}
+europe_countries <- c("Albania", "Andorra", "Austria", "Belarus", "Belgium", 
+"Bosnia and Herzegovina", "Bulgaria", "Croatia", "Cyprus", "Czech Republic", 
+"Denmark", "Estonia", "Finland", "France", "Germany", "Greece", "Hungary", 
+"Iceland", "Ireland", "Italy", "Kazakhstan", "Kosovo", "Latvia", 
+"Liechtenstein", "Lithuania", "Luxembourg", "Malta", "Moldova", 
+"Monaco", "Montenegro", "Netherlands", "North Macedonia", "Norway", 
+"Poland", "Portugal", "Romania", "Russia", "San Marino", "Serbia", 
+"Slovakia", "Slovenia", "Spain", "Sweden", "Switzerland", "Turkey", 
+"Ukraine", "United Kingdom", "Vatican City")
+
+sunflower_oil_europe <-  sunflower_oil %>% 
+  filter(entity %in% europe_countries)
+  
+```
+
+```{r}
+library(gghighlight)
+sunflower_oil_europe |> 
+  ggplot(aes(x = year, y = sunflower_oil_production_tonnes, group = entity, fill = entity)) +
+  geom_area() +
+  gghighlight(entity == "Ukraine")
+```
+```{r}
+sunflower_oil_europe |> 
+  ggplot(aes(x = year, y = sunflower_oil_production_tonnes, group = entity, fill = entity)) +
+  geom_area() 
+```
+```{r}
+sunflower_oil_europe %>% 
+  filter(entity != "Russia") %>% 
+   ggplot(aes(x = year, y = sunflower_oil_production_tonnes, group = entity, fill = entity)) +
+  geom_area() +
+  gghighlight(entity == "Ukraine")
+```
+
+```{r}
+sunflower_seed <- read_csv(here("data", "sunflower-seed-production.csv")) %>% 
+  clean_names()
+
+sunflower_seed_europe <-  sunflower_seed %>% 
+  filter(entity %in% europe_countries)
+```
+
+```{r}
+sunflower_seed_europe |> 
+  ggplot(aes(x = year, y = sunflower_seeds_production_tonnes, group = entity, fill = entity)) +
+  geom_area() 
+```
+
+## Exploratory Viz -- Map of Ukraine
+
+```{r}
+library(sf)
+```
+```{r}
+folder_path <- here("data", "ua-shp")
+```
+
+
+```{r}
+shapefile_list <- list.files(
+  path = folder_path,
+  pattern = "\\.shp$",
+  full.names = TRUE
+)
+```
+
