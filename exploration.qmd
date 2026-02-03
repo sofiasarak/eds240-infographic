@@ -1,0 +1,83 @@
+---
+title: "exploration"
+format: html
+---
+
+```{r}
+#| message: false
+library(tidyverse)
+library(readxl)
+library(here)
+library(ggplot2)
+```
+
+## Loading in data
+
+After initially downloading the data file from Global Forest Watch 
+
+Access data from original .xlsx 
+```{r}
+#| execute: false
+# create data frame of sheet numbers and what they correspond to
+sheets <- tribble(
+  ~df, ~sheet,
+  "country_tree_loss", 2,
+  "country_carbon", 3,
+  "sub_1_tree_loss", 4,
+  "sub_1_carbon", 5,
+  "sub_2_tree_loss", 6,
+  "sub_2_carbon", 7
+)
+
+# for loop for accessing data from original excel file, and save as csv
+for (i in 1:nrow(sheets)){
+  
+  # extract variables and sheet number from df
+  df_name <- sheets$df[i]
+  sheet_num <- sheets$sheet[i]
+  
+  # load in and assign dfs
+  df <- read_excel(here("data", "gfw_ukraine.xlsx"), sheet = sheet_num)
+  assign(df_name, df)
+  
+  # save as csv --> uncomment code below 
+  # file_path <- paste0(here(), "/data/", df_name, ".csv")
+  # write_csv(df, file_path)
+}
+```
+
+Access from downloaded csv (after having initially downloaded them)
+```{r}
+
+```
+
+## Pivoting longer
+```{r}
+country_tree_loss_long <- country_tree_loss %>% 
+  pivot_longer(cols = c(tc_loss_ha_2001:tc_loss_ha_2024), 
+               names_to = "year",
+               values_to = "tc_loss_ha")
+
+country_tree_loss_long <- country_tree_loss_long %>% 
+  group_by(year) %>% 
+  summarize(total_loss_ha = sum(tc_loss_ha)) %>% 
+  
+  # cleaner year column
+  mutate(year = as.numeric((str_sub(year, -4, -1))),
+         year_factor = as.factor(year))
+```
+
+## Exploratory Viz
+```{r}
+ggplot(data = country_tree_loss_long, aes(x = year_factor, y = total_loss_ha)) +
+  geom_col()
+```
+```{r}
+ggplot(data = country_tree_loss_long, aes(x = year, y = total_loss_ha)) +
+  geom_line() +
+  labs(title = "Ukraine's Tree Cover Loss (ha), Over Time",
+       y = " ",
+       x = "Year") +
+  theme_minimal() +
+  scale_y_continuous(labels = scales::comma)
+```
