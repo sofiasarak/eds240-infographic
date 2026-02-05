@@ -1,96 +1,103 @@
 ---
-title: "exploration"
-format: html
+title: "Infographic Data Exploration: Ukraine's Natural Resources"
+author: "Sofia Sarak"
+date: "February 4, 2026"
+format: pdf
 ---
+
+The following exploration uses data from [Our World in Data](https://ourworldindata.org/search?topics=Energy+and+Environment), [Global Forest Watch](https://www.globalforestwatch.org/dashboards/country/UKR/), and [Worldometer](https://www.worldometers.info/). It focuses on the natural resources of Ukraine in the context of its European neighbors.
+
+The specific variables explored are:
+
+-   Ukraine's forest loss (ha) over time
+
+-   Sunflower seed and oil production in Europe, by country
+
+-   Agricultural land use in Europe, by country
 
 ```{r}
 #| message: false
+#| warning: false
+# Load necessary libraries
 library(tidyverse)
-library(readxl)
 library(here)
 library(ggplot2)
 library(janitor)
+library(gghighlight)
+library(patchwork)
 ```
 
-## Loading in data
+## Load and Wrangle Data
 
-After initially downloading the data file from Global Forest Watch 
+### Tree cover loss over time
 
-Access data from original .xlsx 
 ```{r}
 #| execute: false
-# create data frame of sheet numbers and what they correspond to
-sheets <- tribble(
-  ~df, ~sheet,
-  "country_tree_loss", 2,
-  "country_carbon", 3,
-  "sub_1_tree_loss", 4,
-  "sub_1_carbon", 5,
-  "sub_2_tree_loss", 6,
-  "sub_2_carbon", 7
-)
+#| echo: false
 
-# for loop for accessing data from original excel file, and save as csv
-for (i in 1:nrow(sheets)){
-  
-  # extract variables and sheet number from df
-  df_name <- sheets$df[i]
-  sheet_num <- sheets$sheet[i]
-  
-  # load in and assign dfs
-  df <- read_excel(here("data", "gfw_ukraine.xlsx"), sheet = sheet_num)
-  assign(df_name, df)
-  
-  # save as csv --> uncomment code below 
-  # file_path <- paste0(here(), "/data/", df_name, ".csv")
-  # write_csv(df, file_path)
-}
+# The raw data file from Global Forest Watch is an .xlsx, with each data variable stored in a different sheet (it only contains data for Ukraine). To access and save each as a .csv, the following was done (does not need to be repeated once data is downloaded):
+
+# library(readxl)
+
+# # create data frame of sheet numbers and what they correspond to
+# sheets <- tribble(
+#   ~df, ~sheet,
+#   "country_tree_loss", 2,
+#   "country_carbon", 3,
+#   "sub_1_tree_loss", 4,
+#   "sub_1_carbon", 5,
+#   "sub_2_tree_loss", 6,
+#   "sub_2_carbon", 7
+# )
+# 
+# # for loop for accessing data from original excel file, and save as csv
+# for (i in 1:nrow(sheets)){
+#   
+#   # extract variables and sheet number from df
+#   df_name <- sheets$df[i]
+#   sheet_num <- sheets$sheet[i]
+#   
+#   # load in and assign dfs
+#   df <- read_excel(here("data", "gfw_ukraine.xlsx"), sheet = sheet_num)
+#   assign(df_name, df)
+#   
+#   # save as csv --> uncomment code below 
+#   # file_path <- paste0(here(), "/data/", df_name, ".csv")
+#   # write_csv(df, file_path)
+# }
 ```
 
-Access from downloaded csv (after having initially downloaded them)
 ```{r}
+#| message: false
+# Read in from downloaded csv
 country_tree_loss <- read_csv(here("data", "forest-carbon", "country_tree_loss.csv"))
 ```
 
-## Pivoting longer
+Wrangle data, pivoting longer:
+
 ```{r}
 country_tree_loss_long <- country_tree_loss %>% 
+  
+  # adjust df so loss and year are two columns
   pivot_longer(cols = c(tc_loss_ha_2001:tc_loss_ha_2024), 
                names_to = "year",
-               values_to = "tc_loss_ha")
-
-country_tree_loss_long <- country_tree_loss_long %>% 
+               values_to = "tc_loss_ha") %>% 
+  
+  # add all threshold levels into one value
   group_by(year) %>% 
   summarize(total_loss_ha = sum(tc_loss_ha)) %>% 
   
-  # cleaner year column
+  # create two clean year columns for plotting purposes
   mutate(year = as.numeric((str_sub(year, -4, -1))),
          year_factor = as.factor(year))
 ```
 
-## Exploratory Viz -- Tree Loss
-```{r}
-ggplot(data = country_tree_loss_long, aes(x = year_factor, y = total_loss_ha)) +
-  geom_col()
-```
-```{r}
-ggplot(data = country_tree_loss_long, aes(x = year, y = total_loss_ha)) +
-  geom_line() +
-  labs(title = "Ukraine's Tree Cover Loss (ha), Over Time",
-       y = " ",
-       x = "Year") +
-  theme_minimal() +
-  scale_y_continuous(labels = scales::comma)
-```
+### Agricultural land use and country data
 
-## Exploratory Viz -- Sunflowers
+The next two data frames contain data for countries across the entire world, so we want to select only those in Europe, for comparison.
 
 ```{r}
-sunflower_oil <- read_csv(here("data", "production-of-sunflower-oil", "production-of-sunflower-oil.csv")) %>% 
-  clean_names()
-```
-
-```{r}
+# create vector of only European countries
 europe_countries <- c("Albania", "Andorra", "Austria", "Belarus", "Belgium", 
 "Bosnia and Herzegovina", "Bulgaria", "Croatia", "Cyprus", "Czech Republic", 
 "Denmark", "Estonia", "Finland", "France", "Germany", "Greece", "Hungary", 
@@ -100,61 +107,180 @@ europe_countries <- c("Albania", "Andorra", "Austria", "Belarus", "Belgium",
 "Poland", "Portugal", "Romania", "Russia", "San Marino", "Serbia", 
 "Slovakia", "Slovenia", "Spain", "Sweden", "Switzerland", "Turkey", 
 "Ukraine", "United Kingdom", "Vatican City")
+```
 
-sunflower_oil_europe <-  sunflower_oil %>% 
-  filter(entity %in% europe_countries)
+```{r}
+#| message: false
+# agricultural land use data, filtered for only European countries
+ag_land <- read_csv(here("data", "agricultural-land", "agricultural-land.csv")) %>%
+  clean_names() %>% 
+  filter(entity %in% europe_countries) %>% 
   
+  # keep data only from 2022
+  filter(year == 2022) %>% 
+  
+  # create rank variable based on ag land
+  mutate(rank_ag_area = dense_rank(desc(agricultural_land_area_hectares)))
+
+# total area of European countries (for standardizing purposes -- not used in exploratory viz)
+areas <- read_csv(here("data", "all_areas.csv")) %>%
+  clean_names() %>% 
+  filter(country %in% europe_countries)
 ```
 
+### Sunflower production data
+
 ```{r}
-library(gghighlight)
-sunflower_oil_europe |> 
+#| message: false
+# sunflower oil
+sunflower_oil <- read_csv(here("data", "production-of-sunflower-oil", "production-of-sunflower-oil.csv")) %>% 
+  clean_names() %>% 
+   filter(entity %in% europe_countries)
+
+# sunflower seeds
+sunflower_seeds <- read_csv(here("data", "sunflower-seed-production.csv")) %>% 
+  clean_names() %>% 
+   filter(entity %in% europe_countries)
+```
+
+## Exploratory Viz 1 -- Tree Cover Loss
+
+```{r}
+# create line plot to show evolution over time
+ggplot(data = country_tree_loss_long, aes(x = year, y = total_loss_ha)) +
+  geom_line() +
+  labs(title = "Ukraine's Tree Cover Loss (ha), Over Time",
+       y = " ",
+       x = "Year") +
+  theme_minimal() +
+  scale_y_continuous(labels = scales::comma)
+```
+
+## Exploratory Viz 2 -- Sunflowers
+
+For these visualizations, I used two methods of coloring the data: one where I colored each country individually, and the other where I highlighted just Ukraine. I plan on building off of these methods, and was hoping to see which I preferred/worked best.
+
+Sunflower Oil:
+
+```{r}
+#| warning: false
+
+# avoid exponential notation in y-axis
+options(scipen = 999)
+
+# create area plot colored by country (lots of countries)
+sun_oil_plot1 <- sunflower_oil |> 
   ggplot(aes(x = year, y = sunflower_oil_production_tonnes, group = entity, fill = entity)) +
   geom_area() +
-  gghighlight(entity == "Ukraine")
-```
-```{r}
-sunflower_oil_europe |> 
+  labs(y = "tonnes",
+       fill = "country") +
+  theme_minimal() +
+  
+  # make legend smaller
+  theme(legend.key.size = unit(0.05, "cm"),
+        legend.text = element_text(size = 6)) 
+
+# create area plot, highlighting just Ukraine
+sun_oil_plot2 <- sunflower_oil |> 
   ggplot(aes(x = year, y = sunflower_oil_production_tonnes, group = entity, fill = entity)) +
-  geom_area() 
-```
-```{r}
-sunflower_oil_europe %>% 
-  filter(entity != "Russia") %>% 
-   ggplot(aes(x = year, y = sunflower_oil_production_tonnes, group = entity, fill = entity)) +
   geom_area() +
-  gghighlight(entity == "Ukraine")
+  labs(y = "tonnes",
+       fill = "country") +
+  
+  # highlight/color only the area that reprsents Ukraine
+  gghighlight(entity == "Ukraine") +
+  theme_minimal()
+
+sun_oil_plot1 / sun_oil_plot2 +
+  plot_layout(axes = "collect") +
+  plot_annotation(title = "Sunflower Oil Production in Europe, by Country")
 ```
 
-```{r}
-sunflower_seed <- read_csv(here("data", "sunflower-seed-production.csv")) %>% 
-  clean_names()
-
-sunflower_seed_europe <-  sunflower_seed %>% 
-  filter(entity %in% europe_countries)
-```
+Sunflower Seeds:
 
 ```{r}
-sunflower_seed_europe |> 
+#| warning: false
+
+# create area plot colored by country
+sun_seed_plot1 <- sunflower_seeds %>%  
   ggplot(aes(x = year, y = sunflower_seeds_production_tonnes, group = entity, fill = entity)) +
-  geom_area() 
+  geom_area() +
+  labs(y = "tonnes",
+       fill = "country") +
+  theme_minimal() +
+  theme(legend.key.size = unit(0.05, "cm"),
+        legend.text = element_text(size = 6)) +
+  scale_y_continuous()
+
+# create area plot, highlighting just Ukraine
+sun_seed_plot2 <- sunflower_seeds %>%  
+  ggplot(aes(x = year, y = sunflower_seeds_production_tonnes, group = entity, fill = entity)) +
+  geom_area() +
+  gghighlight(entity == "Ukraine") +
+  labs(y = "tonnes",
+       fill = "country") +
+  gghighlight(entity == "Ukraine") +
+  theme_minimal()
+
+sun_seed_plot1 / sun_seed_plot2 + 
+  plot_layout(axes = "collect") +
+  plot_annotation(title = "Sunflower Seed Production in Europe, by Country")
 ```
 
-## Exploratory Viz -- Map of Ukraine
+## Exploratory Viz 3 -- Agricultural Land
 
 ```{r}
-library(sf)
-```
-```{r}
-folder_path <- here("data", "ua-shp")
+ag_land %>% 
+  # keep only the top 10 countries by agricultural land in Europe
+  filter(rank_ag_area %in% seq(1, 10, by = 1)) %>% 
+  
+  # and order by area
+  mutate(entity = reorder(entity, rank_ag_area)) %>% 
+  
+  # create bar chart
+  ggplot(aes(y = entity, x = agricultural_land_area_hectares)) +
+  geom_col() +
+  labs(title = "Agricultural Land in Europe by country, 2022",
+       x = "Hectares",
+       y = "Country") +
+  theme_minimal() +
+  gghighlight(entity == "Ukraine")
 ```
 
+## Responses
 
-```{r}
-shapefile_list <- list.files(
-  path = folder_path,
-  pattern = "\\.shp$",
-  full.names = TRUE
-)
-```
+**1. What have you learned about your data? Have any potentially interesting patterns emerged? Point to specific visualizations that you created as you describe your findings.**
 
+The most exciting finding from my exploration was the proportion of sunflower exports that Ukraine contributes to relative to other European countries (under Exploratory Viz 2). Sunflowers are a symbol of Ukraine, so I am looking forward to incorporating their prevalence in the sunflower industry into my final infographic. I would like to try to highlight Ukraine with yellow in the area chart and the other countries with different shades of blue to mimic the Ukrainian flag.
+
+From my other explorations, I saw that the rate of tree cover loss has been increasing in Ukraine over the past 25 years, though the pattern is not consistent. Additionally, Ukraine has the third most agricultural land in Europe, behind Russia and Kazakhstan. In future analysis, I hope to make concrete decisions about what delineates Europe vs Asia (should I even be including Russia and Kazakhstan?) as well as think about dividing agricultural land by total country area in order to compare proportions rather than the real values.
+
+**2. In FPM #1, you outlined some questions that you wanted to answer using these data. Have you made any strides towards answering those questions? If yes, how so? If no, what next steps do you need to take (e.g. I need to create X plot type, I still need to track down Y data, I need to restructure existing data so that you can visualize it in Z ways, etc.)? Have any new questions emerged?**
+
+From FPM #1, I have made progress on the following two questions:
+
+-   How has % forest loss changed in Ukraine, over time? What are the primary drivers of forest loss?
+
+*Forest/tree cover loss has increased over time, though I do not yet know its primary drivers, and may not have data for that.*
+
+-   What agricultural products does Ukraine contribute? And at what scale/rate? 
+
+*Ukraine produces a significant amount of sunflower products compared to its European counterparts.*
+
+But did not make any progress on answering these two: 
+
+- How does % forest cover compare across European countries? And how does it change over time? 
+
+*I have yet to extract % forest cover data for other European countries.* 
+
+- What is the make-up of landcover in Ukraine? 
+
+*I actually don't think I have the right data for this, so I will be dropping this question!*
+
+As I move forward in my analysis, I am expecting my infographic to evolve in purpose and question. For example, if my forest loss data doesn't prove to have any interesting results, I might shift gears!
+
+**3. What challenges do you foresee encountering with your data? These can be data wrangling and / or visualization challenges.**
+
+I was hoping to create a choropleth map of Ukraine and its political districts for this exploration, but I was unable to find good spatial data of their boundaries. The shapefiles I found had all of the districts stored in separate files, so I would have to combine them myself (I think). I am still hoping to make a choropleth map, so finding and manipulating the data further on may prove to be difficult.
+
+I was also thinking about the possibility of creating a sankey diagram or a network map to show the movement of agricultural products from Ukraine to other parts of Europe. I have never done that before, so I am sure it will be challenge.
