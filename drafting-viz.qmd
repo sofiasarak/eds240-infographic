@@ -104,6 +104,21 @@ uki_blue <- "#005BBB"
 ```
 
 ```{r}
+apricot_cream <- "F9C784"
+ocean_blue <- "0094C6"
+amber_gold <- "F2BB05"
+honey_bronze <- "#F5AC45"
+
+# final scheme
+platinum <- "#F0F1F3"
+inferno <- "#A30100"
+honey_bronze <- "#F5AC45"
+baltic_blue <- "#015E7C"
+tropical_teal <- "#00AFB5"
+```
+
+
+```{r}
 #| echo: false
 # avoid exponential notation in y-axis
 options(scipen = 999)
@@ -123,7 +138,7 @@ sunflower_oil |>
         legend.position = "none",
         axis.text.y = element_text(hjust = 0, color = platinum),
         axis.text.x = element_text(color = platinum),
-        plot.background = element_rect(fill = baltic_blue),
+        plot.background = element_rect(fill = "#fcfced"),
         # panel.background = element_rect(fill = alpha(platinum, 0.1), color = alpha(platinum, 0)),
         plot.title = element_text(color = platinum),
         axis.ticks = element_line(color = platinum, linewidth = 1)) +
@@ -180,6 +195,91 @@ ggplot(sunflower_prod, aes(x = year, y = prod)) +
 ![](images/sunflower1.png)
 
 ![](images/sunflower2.png)
+```{r}
+library(sf)
+
+oblasts <- read_sf("data/UA_FULL_Ukraine.geojson")
+
+plot(oblasts)
+```
+```{r}
+by_region <- read_csv(here("data/by_region.csv")) %>% 
+  mutate("name:en" = Region)
+```
+```{r}
+sunflower_region <- left_join(oblasts, by_region, by = "name:en")
+```
+
+
+```{r}
+ggplot(data = sunflower_region) +
+  geom_sf(aes(fill = Number), color = "white")
+```
+```{r}
+library(showtext)
+font_add_google(name = "Geist Mono", family = "geist_mono")
+font_add_google(name = "Averia Serif Libre", family = "libre")
+font_add_google(name = "Roboto", family = "roboto")
+```
+
+
+```{r}
+showtext_auto(enable = TRUE)
+
+
+ggplot(data = sunflower_region) +
+  geom_sf(aes(fill = Size), color = "white") +
+  labs(title = "Size of sunflower farms in hectares",
+       subtitle = "Sunflower farms tend to cover more area in southeast Ukraine,\npossibly due to warmer climate.",
+       fill = " ",
+       caption = "Data Source: OneSoil.ai") +
+  guides(fill = guide_colorbar( #direction = "horizontal",
+                               title.position = "top",
+                               barheight = 8)) +
+   theme_void(base_size = 17) +
+  # theme(legend.position = "bottom") +
+  scale_fill_continuous(high = "#E7B030", low = platinum, na.value = "#cbe1f5",
+                        labels = scales::label_number(scale = 1e-5, suffix = " M")) +
+  theme(plot.margin = margin(t = 1, r = 1, b = 1, l = 1, unit = "cm"),
+        plot.title = element_text(family = "libre",
+                                  size = rel(0.99),
+                                  margin = margin(b = 7)),
+        plot.subtitle = element_text(family = "roboto", size = rel(0.70),
+                                     margin = margin(b = 5)),
+        legend.text = element_text(family = "geist_mono",
+                                   size = rel(0.55)),
+        plot.caption = element_text(family = "roboto",
+                                    margin = margin(t = 20),
+                                    size = rel(0.45)),
+        plot.caption.position = "plot")
+
+
+showtext_auto(enable = FALSE)
+```
+
+```{r}
+ggplot(data = sunflower_region) +
+  geom_sf(aes(fill = Size), color = "white") +
+  labs(title = "Size of Sunflower Farms",
+       fill = "Hectares") +
+  theme_void() +
+  scale_fill_continuous(
+    high = "#E7B030", low = platinum, na.value = "#cbe1f5",
+    labels = scales::label_number(scale = 1e-6, suffix = " M")
+  ) +
+  guides(fill = guide_colorbar(direction = "horizontal",
+                               title.position = "top")) +
+  theme(legend.position = "bottom") +
+  # NA legend patch
+  ggnewscale::new_scale_fill() +
+  geom_sf(data = filter(sunflower_region, is.na(Size)),
+          fill = "#cbe1f5", color = "white") +
+  scale_fill_manual(name = NULL, values = "#cbe1f5",
+                    labels = "No data",
+                    guide = guide_legend(direction = "horizontal",
+                                         title.position = "top"))
+```
+
 
 ## Final Questions
 
@@ -194,18 +294,5 @@ I want my ifnographic to communicate both the cultural and economic importance o
 **4. What feedback do you need from the instructional team and / or your peers to ensure that your intended message and key insights are clear?**
 
 
-```{r}
-apricot_cream <- "F9C784"
-ocean_blue <- "0094C6"
-amber_gold <- "F2BB05"
-honey_bronze <- "#F5AC45"
-
-# final scheme
-platinum <- "#F0F1F3"
-inferno <- "#A30100"
-honey_bronze <- "#F5AC45"
-baltic_blue <- "#015E7C"
-tropical_teal <- "#00AFB5"
-```
 
 
