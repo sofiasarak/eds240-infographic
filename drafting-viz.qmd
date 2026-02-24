@@ -48,9 +48,12 @@ include appropriate text such as titles, captions, axis labels (note: you may ev
 - experiment with colors and typefaces / fonts
 - create a presentable / aesthetically-pleasing theme (e.g. (re)move gridlines / legends as appropriate, adjust font sizes, etc.)
 
+
+Prepare necessary components for visualizations
 ```{r}
 #| message: false
 #| warning: false
+
 # Load necessary libraries
 library(tidyverse)
 library(here)
@@ -58,10 +61,13 @@ library(ggplot2)
 library(janitor)
 library(gghighlight)
 library(patchwork)
+library(showtext)
 ```
 
 ```{r}
 #| message: false
+
+## Load sunflower production data
 
 # create vector of only European countries
 europe_countries <- c("Albania", "Andorra", "Austria", "Belarus", "Belgium", 
@@ -95,21 +101,45 @@ sunflower_seeds <- read_csv(here("data", "sunflower-seed-production.csv")) %>%
     entity == "Ukraine" ~ 1,
     TRUE ~ 0
   ))
+
+## Farms by region data
+
+# Load data and join attributes to geometries
+
+# Ukraine geometry
+oblasts <- read_sf("data/UA_FULL_Ukraine.geojson")
+# Atttributes
+by_region <- read_csv(here("data/by_region.csv")) %>% 
+  mutate("name:en" = Region)
+
+# Join on oblast name
+sunflower_region <- left_join(oblasts, by_region, by = "name:en")
+
+
+## Sunflower production data
+sunflower_prod <- tribble(
+  ~year, ~prod,
+  "2020/21", 13900 * 1000,
+  "2021/22", 16900 * 1000,
+  "2022/2023", 12680 * 1000,
+  "2023/2024", 15100 * 1000,
+  "2024/2025", 12100 * 1000,
+  "2025/2026", 11400 * 1000
+)
 ```
 
-
 ```{r}
-uki_yellow <- "#FED500"
+# Load theme fonts
+font_add_google(name = "Geist Mono", family = "geist_mono")
+font_add_google(name = "Averia Serif Libre", family = "libre")
+font_add_google(name = "Roboto", family = "roboto")
+
+# Save theme colors
+dark_yellow <- "#E7B030"
+light_yellow <- "#f7d481"
 uki_blue <- "#005BBB"
-```
+light_blue <- "#cbe1f5"
 
-```{r}
-apricot_cream <- "F9C784"
-ocean_blue <- "0094C6"
-amber_gold <- "F2BB05"
-honey_bronze <- "#F5AC45"
-
-# final scheme
 platinum <- "#F0F1F3"
 inferno <- "#A30100"
 honey_bronze <- "#F5AC45"
@@ -123,103 +153,139 @@ tropical_teal <- "#00AFB5"
 # avoid exponential notation in y-axis
 options(scipen = 999)
 
-# create area plot colored by country (lots of countries)
+showtext_auto(enable = TRUE)
+
 sunflower_oil |> 
-  filter(year > 1992) %>% 
+    filter(year > 1992) %>% 
   ggplot(aes(x = year, y = sunflower_oil_production_tonnes, group = entity, 
              fill = as.factor(is_ua))) +
-  geom_area(color = alpha(platinum, 0.4)) +
+  geom_area(color = alpha(uki_blue, alpha = 0.5), linewidth = 0.5) +
   labs(x = " ",
-       title = "Tonnes of Sunflower Oil Produced",
-       y = " ") +
-  theme_minimal() +
-  scale_fill_manual(values = c(uki_blue, uki_yellow)) +
+       title = "Tonnes of Sunflower Oil Produced in Europe",
+       y = " ",
+       subtitle = "Other than Russia, Ukraine has only grown as the highest producer of sunflower\noil over the past few decades.",
+       caption = "Data Source: ") +
+  theme_minimal(base_size = 17) +
+  scale_fill_manual(values = c(light_blue, light_yellow)) +
   theme(panel.grid = element_blank(),
         legend.position = "none",
-        axis.text.y = element_text(hjust = 0, color = platinum),
-        axis.text.x = element_text(color = platinum),
-        plot.background = element_rect(fill = "#fcfced"),
-        # panel.background = element_rect(fill = alpha(platinum, 0.1), color = alpha(platinum, 0)),
-        plot.title = element_text(color = platinum),
-        axis.ticks = element_line(color = platinum, linewidth = 1)) +
-    scale_y_continuous(position = "right",
-                       expand = expansion(mult = c(0, 0.05))) +
-  scale_x_continuous(breaks = c(1995, 2000, 2005, 2010, 2015, 2020),
-                     expand = c(0, 0))
-  
+        plot.title = element_text(family = "libre",
+                                  size = rel(0.99),
+                                  margin = margin(b = 7)),
+        plot.subtitle = element_text(family = "roboto", size = rel(0.70)),
+        axis.text.y = element_text(hjust = 0, family = "geist_mono", size = rel(0.65)),
+        axis.text.x = element_text(family = "geist_mono", size = rel(0.65)),
+         plot.caption = element_text(family = "roboto",
+                                    margin = margin(t = 20),
+                                    size = rel(0.45)),
+        plot.caption.position = "plot") +
+  scale_y_continuous(position = "right") +
+   scale_x_continuous(breaks = c(1995, 2000, 2005, 2010, 2015, 2020))
 
-#theme(legend.position = element_blank())
+showtext_auto(enable = FALSE)
 ```
+
 ```{r}
+showtext_auto(enable = TRUE)
+
 sunflower_seeds |> 
     filter(year > 1992) %>% 
   ggplot(aes(x = year, y = sunflower_seeds_production_tonnes, group = entity, 
              fill = as.factor(is_ua))) +
-  geom_area() +
+  geom_area(color = alpha(uki_blue, alpha = 0.5), linewidth = 0.5) +
   labs(x = " ",
-       title = "Tonnes of Sunflower Seeds Produced",
-       y = " ") +
-  theme_minimal() +
-  scale_fill_manual(values = c("cornflowerblue", "yellow")) +
+       title = "Tonnes of Sunflower Seeds Produced in Europe",
+       y = " ",
+       subtitle = "Other than Russia, Ukraine has only grown as the highest producer of sunflower\nseeds over the past few decades.",
+       caption = "Data Source: ") +
+  theme_minimal(base_size = 17) +
+  scale_fill_manual(values = c(light_blue, light_yellow)) +
   theme(panel.grid = element_blank(),
         legend.position = "none",
-        axis.text.y = element_text(hjust = 0, color = "white"),
-        axis.text.x = element_text(color = "white"),
-        plot.background = element_rect(fill = "darkblue"),
-        plot.title = element_text(color = "white")) +
+        plot.title = element_text(family = "libre",
+                                  size = rel(0.99),
+                                  margin = margin(b = 7)),
+        plot.subtitle = element_text(family = "roboto", size = rel(0.70)),
+        axis.text.y = element_text(hjust = 0, family = "geist_mono", size = rel(0.65)),
+        axis.text.x = element_text(family = "geist_mono", size = rel(0.65)),
+        plot.caption = element_text(family = "roboto",
+                                    margin = margin(t = 20),
+                                    size = rel(0.45)),
+        plot.caption.position = "plot") +
   scale_y_continuous(position = "right") +
    scale_x_continuous(breaks = c(1995, 2000, 2005, 2010, 2015, 2020))
-```
-```{r}
-#| message: false
-#| echo: false
-# sunflower_prod <- read_csv(here("data", "yearly_prod.csv"))
 
-sunflower_prod <- tribble(
-  ~year, ~prod,
-  "2020/21", 13900,
-  "2021/22", 16900,
-  "2022/2023", 12680,
-  "2023/2024", 15100,
-  "2024/2025", 12100,
-  "2025/2026", 11400
-)
+showtext_auto(enable = FALSE)
 ```
 
 ```{r}
+showtext_auto(enable = TRUE)
+
 ggplot(sunflower_prod, aes(x = year, y = prod)) +
   geom_col(width = 0.05) +
-  scale_y_continuous(expand = expansion(mult = c(0, 0.3)))
+  scale_y_continuous(expand = expansion(mult = c(0, 0.3))) +
+  theme_minimal(base_size = 17) +
+  labs(title = "Ukraine's Sunflower Seed Production Over Time",
+       subtitle = "Production is variable, with an observed decline after the start of the\nfull-scale Russian invasion in 2022.",
+       x = " ",
+       y = "Tonnes",
+       caption = "Data Source: ") +
+  theme(panel.grid.major.x = element_blank(),
+        legend.position = "none",
+        plot.title = element_text(family = "libre",
+                                  size = rel(0.99),
+                                  margin = margin(b = 7)),
+        plot.subtitle = element_text(family = "roboto", size = rel(0.70)),
+        axis.text.y = element_text(hjust = 0, family = "geist_mono", size = rel(0.65)),
+        axis.text.x = element_text(family = "geist_mono", size = rel(0.65)),
+        axis.title = element_text(family = "roboto", size = rel(0.7)),
+        plot.caption = element_text(family = "roboto",
+                                    margin = margin(t = 20),
+                                    size = rel(0.45)),
+        plot.caption.position = "plot")
 
+showtext_auto(enable = FALSE)
 ```
 ![](images/sunflower1.png)
 
 ![](images/sunflower2.png)
-```{r}
-library(sf)
 
-oblasts <- read_sf("data/UA_FULL_Ukraine.geojson")
-
-plot(oblasts)
-```
-```{r}
-by_region <- read_csv(here("data/by_region.csv")) %>% 
-  mutate("name:en" = Region)
-```
-```{r}
-sunflower_region <- left_join(oblasts, by_region, by = "name:en")
-```
-
+## Choropleth
 
 ```{r}
+showtext_auto(enable = TRUE)
+
 ggplot(data = sunflower_region) +
-  geom_sf(aes(fill = Number), color = "white")
-```
-```{r}
-library(showtext)
-font_add_google(name = "Geist Mono", family = "geist_mono")
-font_add_google(name = "Averia Serif Libre", family = "libre")
-font_add_google(name = "Roboto", family = "roboto")
+  geom_sf(aes(fill = Number), color = "white") +
+  labs(title = "Number of sunflower farms by oblast",
+       subtitle = "There tend to be more sunflower farms in southeast Ukraine,\npossibly due to warmer climate.",
+       fill = " ",
+       caption = "Data Source: OneSoil.ai") +
+  guides(fill = guide_colorbar( #direction = "horizontal",
+                               title.position = "top",
+                               barheight = 8)) +
+   theme_void(base_size = 17) +
+  # theme(legend.position = "bottom") +
+  scale_fill_continuous(high = "#E7B030", low = platinum, na.value = "#cbe1f5",
+                        labels = scales::label_number(scale = 1e-5, suffix = " million")) +
+  theme(plot.margin = margin(t = 1, r = 1, b = 1, l = 1, unit = "cm"),
+        plot.title = element_text(family = "libre",
+                                  size = rel(0.99),
+                                  margin = margin(b = 7)),
+        plot.subtitle = element_text(family = "roboto", size = rel(0.70),
+                                     margin = margin(b = 5)),
+        legend.text = element_text(family = "geist_mono",
+                                   size = rel(0.55)),
+        plot.caption = element_text(family = "roboto",
+                                    margin = margin(t = 20),
+                                    size = rel(0.45)),
+        plot.caption.position = "plot") +
+  
+  # add no data legend
+  annotate("rect", xmin = 38.5, xmax = 39.5, ymin = 45.6, ymax = 45.9, fill = "#cbe1f5") +
+  annotate("text", x = 38.5, y = 45.3, label = "No Data", hjust = 0, size = 3.1, family = "geist_mono")
+
+showtext_auto(enable = FALSE)
 ```
 
 
@@ -237,9 +303,8 @@ ggplot(data = sunflower_region) +
                                title.position = "top",
                                barheight = 8)) +
    theme_void(base_size = 17) +
-  # theme(legend.position = "bottom") +
   scale_fill_continuous(high = "#E7B030", low = platinum, na.value = "#cbe1f5",
-                        labels = scales::label_number(scale = 1e-5, suffix = " M")) +
+                        labels = scales::label_number(scale = 1e-5, suffix = " million")) +
   theme(plot.margin = margin(t = 1, r = 1, b = 1, l = 1, unit = "cm"),
         plot.title = element_text(family = "libre",
                                   size = rel(0.99),
@@ -251,33 +316,14 @@ ggplot(data = sunflower_region) +
         plot.caption = element_text(family = "roboto",
                                     margin = margin(t = 20),
                                     size = rel(0.45)),
-        plot.caption.position = "plot")
+        plot.caption.position = "plot") +
+  
+  # add no data legend
+  annotate("rect", xmin = 38.5, xmax = 39.5, ymin = 45.6, ymax = 45.9, fill = "#cbe1f5") +
+  annotate("text", x = 38.5, y = 45.3, label = "No Data", hjust = 0, size = 3.1, family = "geist_mono")
 
 
 showtext_auto(enable = FALSE)
-```
-
-```{r}
-ggplot(data = sunflower_region) +
-  geom_sf(aes(fill = Size), color = "white") +
-  labs(title = "Size of Sunflower Farms",
-       fill = "Hectares") +
-  theme_void() +
-  scale_fill_continuous(
-    high = "#E7B030", low = platinum, na.value = "#cbe1f5",
-    labels = scales::label_number(scale = 1e-6, suffix = " M")
-  ) +
-  guides(fill = guide_colorbar(direction = "horizontal",
-                               title.position = "top")) +
-  theme(legend.position = "bottom") +
-  # NA legend patch
-  ggnewscale::new_scale_fill() +
-  geom_sf(data = filter(sunflower_region, is.na(Size)),
-          fill = "#cbe1f5", color = "white") +
-  scale_fill_manual(name = NULL, values = "#cbe1f5",
-                    labels = "No data",
-                    guide = guide_legend(direction = "horizontal",
-                                         title.position = "top"))
 ```
 
 
