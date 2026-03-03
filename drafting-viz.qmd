@@ -2,7 +2,7 @@
 title: "Visualization Draft"
 author: "Sofia Sarak"
 date: "February 22, 2026"
-format: html
+format: pdf
 editor: visual
 ---
 
@@ -155,6 +155,19 @@ sunflower_prod <- tribble(
   "2024/2025", 12100 * 1000,
   "2025/2026", 11400 * 1000
 )
+
+
+## Ukraine's agriculture data, 2021
+uki_agri_2021 <- tribble(
+  ~export, ~tonnes, ~value,
+  "Sunflower Oil", 5000000, 6400000000,
+  "Maize", 23000000, 5900000000,
+  "Wheat", 19000000, 5100000000,
+  "Rapeseed", 2700000, 1700000000,
+  "Barley", 5800000, 1300000000
+)
+
+# Source: https://www.europarl.europa.eu/RegData/etudes/BRIE/2024/760432/EPRS_BRI(2024)760432_EN.pdf#:~:text=By%20volume%20and%20value%2C%20Ukraine's%20main%20export,and%20barley%20(5.8%20million%20tonnes%2C%20US$1.3%20billion).
 ```
 
 Create and save theme variables.
@@ -176,6 +189,8 @@ inferno <- "#A30100"
 honey_bronze <- "#F5AC45"
 baltic_blue <- "#015E7C"
 tropical_teal <- "#00AFB5"
+
+lighter_yellow <- "#FFF6B1"
 ```
 
 ### Plot Type 1: Area Charts
@@ -188,49 +203,121 @@ options(scipen = 999)
 
 showtext_auto(enable = TRUE)
 
-sunflower_oil |> 
+sunflower_oil %>% 
+  
+  # create column with production tonnes scaled to be in millions
+  mutate(sunflower_oil_prod_mil_tonnes = sunflower_oil_production_tonnes/1000000) %>% 
+  
+  # create plot
     filter(year > 1992) %>% 
-  ggplot(aes(x = year, y = sunflower_oil_production_tonnes, group = entity, 
+  ggplot(aes(x = year, y = sunflower_oil_prod_mil_tonnes, group = entity, 
              fill = as.factor(is_ua))) +
   geom_area(color = alpha(uki_blue, alpha = 0.5), linewidth = 0.5) +
   labs(x = " ",
-       title = "Tonnes of Sunflower Oil Produced in Europe",
-       y = " ",
-       subtitle = "Other than Russia, Ukraine has only grown as the highest producer of sunflower\noil over the past few decades.",
+       # title = "Sunflower Oil",
+       y = "Tonnes Produced (in millions)",
+       # subtitle = "<b><span style='color:#FFF6B1;'>Production in Ukraine</span></b> has surged since 1995, with output being comparable<br>only to Russia's.",
        caption = "Data Source: Our World in Data") +
   theme_minimal(base_size = 17) +
-  scale_fill_manual(values = c(light_blue, light_yellow)) +
-  theme(panel.grid = element_blank(),
+  scale_fill_manual(values = c(light_blue, lighter_yellow)) +
+  scale_y_continuous(position = "right", expand = c(0,0)) +
+  annotate("text", x = 2017, y = 2.3, label = "Ukraine", size = 6, color = light_yellow, 
+           family = "geist_mono") +
+  annotate("text", x = 2019, y = 9.5, label = "Russia", size = 5.5, color = uki_blue,
+           family = "geist_mono") +
+  annotate("text", x = 1999, y = 13, label = "Sunflower Oil", size = 8, family = "libre") +
+  theme(plot.background = element_rect(fill = "#B1D7FF"),
+    panel.grid = element_blank(),
         legend.position = "none",
         plot.title = element_text(family = "libre",
                                   size = rel(0.99),
                                   margin = margin(b = 7)),
-        plot.subtitle = element_text(family = "roboto", size = rel(0.70)),
-        axis.text.y = element_text(hjust = 0, family = "geist_mono", size = rel(0.65)),
+        plot.subtitle = ggtext::element_markdown(family = "roboto", size = rel(0.70)),
+        axis.text.y.right = element_text(family = "geist_mono", size = rel(0.65), margin = margin(l = -15)),
         axis.text.x = element_text(family = "geist_mono", size = rel(0.65)),
-         plot.caption = element_text(family = "roboto",
-                                    margin = margin(t = 20),
+        plot.caption = element_text(family = "roboto",
+                                    margin = margin(t = 5),
                                     size = rel(0.45)),
-        plot.caption.position = "plot") +
-  scale_y_continuous(position = "right") +
+        plot.caption.position = "plot",
+        axis.title.y.right = element_text(family = "roboto", size = rel(0.60), margin = margin(l = 15))) +
+        # panel.grid.minor.y = element_line(color = alpha("gray50", 0.5))) +
    scale_x_continuous(breaks = c(1995, 2000, 2005, 2010, 2015, 2020))
+
+ggsave("sunflower_oil_area.pdf", width  = 10)
 
 showtext_auto(enable = FALSE)
 ```
+```{r}
+#| echo: false
+#| fig-alt: "Area chart showing sunflower oil production in tonnes from 1992 to 2022, with Ukraine contributing about the third of production in Europe by 2022."
+# avoid exponential notation in y-axis
+options(scipen = 999)
+
+showtext_auto(enable = TRUE)
+
+sunflower_seeds %>% 
+  
+   # create column with production tonnes scaled to be in millions
+  mutate(sunflower_seed_prod_mil_tonnes = sunflower_seeds_production_tonnes/1000000) %>% 
+
+    filter(year > 1992) %>% 
+  ggplot(aes(x = year, y = sunflower_seed_prod_mil_tonnes, group = entity, 
+             fill = as.factor(is_ua))) +
+  geom_area(color = alpha(uki_blue, alpha = 0.5), linewidth = 0.5) +
+  labs(x = " ",
+       # title = "Sunflower Oil",
+       y = "Tonnes Produced (in millions)",
+       # subtitle = "<b><span style='color:#FFF6B1;'>Production in Ukraine</span></b> has surged since 1995, with output being comparable<br>only to Russia's.",
+       caption = "Data Source: Our World in Data") +
+  theme_minimal(base_size = 17) +
+  scale_fill_manual(values = c(light_blue, lighter_yellow)) +
+  scale_y_continuous(position = "right", expand = c(0,0)) +
+  annotate("text", x = 2018, y = 6, label = "Ukraine", size = 6, color = light_yellow, 
+           family = "geist_mono") +
+  annotate("text", x = 2020, y = 25, label = "Russia", size = 5.5, color = uki_blue,
+           family = "geist_mono") +
+  annotate("text", x = 1999, y = 30, label = "Sunflower Seeds", size = 8, family = "libre") +
+  theme(plot.background = element_rect(fill = "#B1D7FF"),
+    panel.grid = element_blank(),
+        legend.position = "none",
+        plot.title = element_text(family = "libre",
+                                  size = rel(0.99),
+                                  margin = margin(b = 7)),
+        plot.subtitle = ggtext::element_markdown(family = "roboto", size = rel(0.70)),
+        axis.text.y.right = element_text(family = "geist_mono", size = rel(0.65), margin = margin(l = -15)),
+        axis.text.x = element_text(family = "geist_mono", size = rel(0.65)),
+        plot.caption = element_text(family = "roboto",
+                                    margin = margin(t = 5),
+                                    size = rel(0.45)),
+        plot.caption.position = "plot",
+        axis.title.y.right = element_text(family = "roboto", size = rel(0.60), margin = margin(l = 15))) +
+        # panel.grid.minor.y = element_line(color = alpha("gray50", 0.5))) +
+   scale_x_continuous(breaks = c(1995, 2000, 2005, 2010, 2015, 2020))
+
+ggsave("sunflower_seed_area.pdf", width  = 10)
+
+showtext_auto(enable = FALSE)
+```
+
+
 
 ```{r}
 #|fig-alt: "Area chart showing sunflower oil production in tonnes from 1992 to 2022, with Ukraine contributing about the third of production in Europe by 2022."
 
 showtext_auto(enable = TRUE)
 
-sunflower_seeds |> 
+sunflower_seeds %>% 
+  
+   # create column with production tonnes scaled to be in millions
+  mutate(sunflower_seed_prod_mil_tonnes = sunflower_seeds_production_tonnes/1000000) %>% 
+
     filter(year > 1992) %>% 
-  ggplot(aes(x = year, y = sunflower_seeds_production_tonnes, group = entity, 
+  ggplot(aes(x = year, y = sunflower_seed_prod_mil_tonnes, group = entity, 
              fill = as.factor(is_ua))) +
   geom_area(color = alpha(uki_blue, alpha = 0.5), linewidth = 0.5) +
   labs(x = " ",
-       title = "Tonnes of Sunflower Seeds Produced in Europe",
-       y = " ",
+       title = "Sunflower Seed Production",
+       y = "Tonnes Produced (in millions)",
        subtitle = "Other than Russia, Ukraine has only grown as the highest producer of sunflower\nseeds over the past few decades.",
        caption = "Data Source: Our World in Data") +
   theme_minimal(base_size = 17) +
@@ -241,12 +328,13 @@ sunflower_seeds |>
                                   size = rel(0.99),
                                   margin = margin(b = 7)),
         plot.subtitle = element_text(family = "roboto", size = rel(0.70)),
-        axis.text.y = element_text(hjust = 0, family = "geist_mono", size = rel(0.65)),
+        axis.text.y.right = element_text(family = "geist_mono", size = rel(0.65), margin = margin(l = -15)),
         axis.text.x = element_text(family = "geist_mono", size = rel(0.65)),
         plot.caption = element_text(family = "roboto",
                                     margin = margin(t = 20),
                                     size = rel(0.45)),
-        plot.caption.position = "plot") +
+        plot.caption.position = "plot",
+        axis.title.y.right = element_text(family = "roboto", size = rel(0.60), margin = margin(l = 15))) +
   scale_y_continuous(position = "right") +
    scale_x_continuous(breaks = c(1995, 2000, 2005, 2010, 2015, 2020))
 
@@ -260,16 +348,22 @@ showtext_auto(enable = FALSE)
 
 showtext_auto(enable = TRUE)
 
-ggplot(sunflower_prod, aes(x = year, y = prod)) +
+sunflower_prod %>% 
+  mutate(prod_millions = prod/1000000) %>% 
+
+ggplot(aes(x = year, y = prod_millions)) +
   geom_col(width = 0.05) +
   scale_y_continuous(expand = expansion(mult = c(0, 0.3))) +
   theme_minimal(base_size = 17) +
   labs(title = "Ukraine's Sunflower Seed Production Over Time",
-       subtitle = "Production is variable, with an observed decline after the start of the\nfull-scale Russian invasion in 2022.",
+       # subtitle = "Production is variable, with an observed decline after the start of the\nfull-scale Russian invasion in 2022.",
        x = " ",
-       y = "Tonnes",
+       y = " ",
        caption = "Data Source: National Sunflower Association") +
-  theme(panel.grid.major.x = element_blank(),
+  theme(plot.background = element_rect(fill = "#B1D7FF"),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        panel.grid.major.y = element_line(linewidth = 0.5, color = uki_blue),
         legend.position = "none",
         plot.title = element_text(family = "libre",
                                   size = rel(0.99),
@@ -283,7 +377,11 @@ ggplot(sunflower_prod, aes(x = year, y = prod)) +
                                     size = rel(0.45)),
         plot.caption.position = "plot")
 
+ggsave("prod_bar.pdf", width  = 8)
+
 showtext_auto(enable = FALSE)
+
+
 ```
 
 I plan to use Affinity to add sunflowers to this bar chart (such as the image below), having them serve as the actual bars in the plot.
@@ -372,6 +470,95 @@ ggplot(data = sunflower_region) +
 
 showtext_auto(enable = FALSE)
 ```
+### Plot Type 4: Donut Chart
+```{r}
+# Compute percentages
+uki_agri_2021$fraction <- uki_agri_2021$value / sum(uki_agri_2021$value)
+
+# Compute the cumulative percentages (top of each rectangle)
+uki_agri_2021$ymax = cumsum(uki_agri_2021$fraction)
+
+# Compute the bottom of each rectangle
+uki_agri_2021$ymin = c(0, head(uki_agri_2021$ymax, n=-1))
+ 
+# Make the plot
+ggplot(uki_agri_2021, aes(ymax=ymax, ymin=ymin, xmax=4, xmin=3, fill=reorder(export, fraction))) +
+     geom_rect() +
+     coord_polar(theta="y") + # Try to remove that to understand how the chart is built initially
+     xlim(c(2, 4)) + # Try to remove that to see how to make a pie chart
+  theme_void()
+```
+
+
+
+```{r}
+uki_agri_2021 %>% 
+  ggplot(aes(x = export, y = value)) +
+  geom_bar(stat = "identity") 
+```
+
+```{r}
+#install.packages("remotes")
+#remotes::install_github("hrbrmstr/waffle")
+
+library(waffle)
+uki_agri_2021 %>% 
+  mutate(value = value / 1e8) %>% 
+  ggplot(aes(fill = export, values = value)) +
+  geom_waffle(tile_shape = "circle") +
+  theme_void()
+```
+```{r}
+
+uki_agri_2021 <- uki_agri_2021 %>% 
+  mutate(value_billions = value/100000000,
+         tonnes_millions = tonnes/1000000)
+
+# uki agri exports in value of US dollars
+ggplot(uki_agri_2021_waffle, aes(fill = reorder(export, -value_billions), values = value_billions)) + 
+  waffle::geom_waffle(n_rows = 10, radius = unit(0.5, "npc"), size = 0) +
+  labs(fill = " ") +
+  coord_equal() +
+  theme_waffle()
+```
+
+```{r}
+# uki agri exports in tonnes
+
+ggplot(uki_agri_2021, aes(fill = reorder(export, -tonnes), values = tonnes)) + 
+  waffle::geom_waffle(n_rows = 10, radius = unit(0.5, "npc"), size = 0) +
+  labs(fill = " ") +
+  coord_equal() +
+  theme_waffle()
+```
+
+
+```{r}
+df <- data.frame(
+  export = c("Sunflower Oil", "Maize", "Wheat", "Rapeseed", "Barley"),
+  value  = c(64, 59, 51, 17, 13)
+)
+
+ggplot(df, aes(fill = export, values = value)) +
+  waffle::geom_waffle(n_rows = 10, size = 0.5, colour = "white", flip = TRUE) +
+  scale_fill_manual(values = c(
+    "Sunflower Oil" = "#f5c400",
+    "Maize"         = "#e8852a",
+    "Wheat"         = "#c8a96e",
+    "Rapeseed"      = "#6a994e",
+    "Barley"        = "#a7c4bc"
+  )) +
+  coord_equal() +
+  labs(
+    title = "Ukraine Agricultural Exports",
+    caption = "1 square = $1 billion",
+    fill = NULL
+  ) +
+  theme_void() +
+  theme(legend.position = "bottom")
+
+```
+
 
 ## Final Questions
 
