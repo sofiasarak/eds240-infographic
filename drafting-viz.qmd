@@ -509,18 +509,96 @@ uki_agri_2021 %>%
   theme_void()
 ```
 ```{r}
+# create color scheme
+exports <- c("Sunflower Oil" = alpha(dark_yellow, 0.7),
+             "Maize" = alpha("#007756",0.7),
+             "Wheat" = alpha("#846E54",0.7),
+             "Rapeseed" = alpha("#6d7700", 0.7),
+             "Barley" = alpha("#442824", 0.7))
 
+
+barely_backup <- "#776100"
+rapeseed_backup <- "#6d7700"
+wheat_backup <- "#00770a"
+
+# adjust data
 uki_agri_2021 <- uki_agri_2021 %>% 
   mutate(value_billions = value/100000000,
          tonnes_millions = tonnes/1000000)
 
+showtext_auto(enable = TRUE)
+
 # uki agri exports in value of US dollars
-ggplot(uki_agri_2021_waffle, aes(fill = reorder(export, -value_billions), values = value_billions)) + 
-  waffle::geom_waffle(n_rows = 10, radius = unit(0.5, "npc"), size = 0) +
-  labs(fill = " ") +
+ggplot(uki_agri_2021, aes(fill = reorder(export, -value_billions), values = value_billions)) + 
+  waffle::geom_waffle(n_rows = 10, radius = unit(0.5, "npc"), size = 0,
+                      flip = TRUE) +
+  labs(fill = " ",
+       title = "Main Export Products in 2021 (USD)",
+       subtitle = "Sunflower oil was the highest-valued export at $6.4 billion.",
+       caption = "Data Source: European Parliamentary Data Service") +
   coord_equal() +
-  theme_waffle()
+  theme_void() +
+  theme(plot.background = element_rect(fill = "#B1D7FF"),
+        plot.title = element_text(family = "libre",
+                                  size = rel(0.99),
+                                  margin = margin(t = 8)),
+        plot.subtitle = element_text(family = "roboto", size = rel(0.70),
+                                     margin = margin(t = 4)),
+        legend.text = element_text(family = "geist_mono",
+                                   size = rel(0.4)),
+        plot.caption = element_text(family = "roboto",
+                                    margin = margin(t = 2, b = 5),
+                                    size = rel(0.45)),
+        plot.caption.position = "plot",
+        legend.position = "bottom",
+        legend.key.size = unit(0.3, "cm")) +
+  scale_discrete_manual(values = exports, aesthetics = "fill") 
+
+ggsave("waffle_chart.pdf")
+
+showtext_auto(enable = FALSE)
 ```
+
+```{r}
+
+showtext_auto(enable = TRUE)
+
+# uki agri exports in tonnes of US dollars
+exports_mass <- ggplot(uki_agri_2021, aes(fill = reorder(export, -tonnes_millions), values = tonnes_millions)) + 
+  waffle::geom_waffle(n_rows = 10, radius = unit(0.5, "npc"), size = 0,
+                      flip = TRUE) +
+  labs(fill = " ",
+       title = "By Mass (Tonnes)") +
+  coord_equal() +
+  theme_void() +
+  theme(plot.title = element_text(family = "libre",
+                                  size = rel(0.99),
+                                  margin = margin(t = 8)),
+        plot.subtitle = element_text(family = "roboto", size = rel(0.70),
+                                     margin = margin(b = 0)),
+        legend.text = element_text(family = "geist_mono",
+                                   size = rel(0.55)),
+        plot.caption = element_text(family = "roboto",
+                                    margin = margin(t = 20),
+                                    size = rel(0.45)),
+        plot.caption.position = "plot") +
+  scale_discrete_manual(values = exports, aesthetics = "fill")
+
+showtext_auto(enable = FALSE)
+```
+
+Combine plots
+
+```{r}
+library(patchwork)
+showtext_auto(enable = TRUE)
+
+exports_mass + exports_value +
+  plot_layout(guides = "collect")
+
+showtext_auto(enable = FALSE)
+```
+
 
 ```{r}
 # uki agri exports in tonnes
