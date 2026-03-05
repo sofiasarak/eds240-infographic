@@ -247,6 +247,7 @@ ggsave("sunflower_oil_area.pdf", width  = 10)
 
 showtext_auto(enable = FALSE)
 ```
+
 ```{r}
 #| echo: false
 #| fig-alt: "Area chart showing sunflower oil production in tonnes from 1992 to 2022, with Ukraine contributing about the third of production in Europe by 2022."
@@ -298,8 +299,6 @@ ggsave("sunflower_seed_area.pdf", width  = 10)
 
 showtext_auto(enable = FALSE)
 ```
-
-
 
 ```{r}
 #|fig-alt: "Area chart showing sunflower oil production in tonnes from 1992 to 2022, with Ukraine contributing about the third of production in Europe by 2022."
@@ -470,7 +469,9 @@ ggplot(data = sunflower_region) +
 
 showtext_auto(enable = FALSE)
 ```
+
 ### Plot Type 4: Donut Chart
+
 ```{r}
 # Compute percentages
 uki_agri_2021$fraction <- uki_agri_2021$value / sum(uki_agri_2021$value)
@@ -489,8 +490,6 @@ ggplot(uki_agri_2021, aes(ymax=ymax, ymin=ymin, xmax=4, xmin=3, fill=reorder(exp
   theme_void()
 ```
 
-
-
 ```{r}
 uki_agri_2021 %>% 
   ggplot(aes(x = export, y = value)) +
@@ -508,9 +507,10 @@ uki_agri_2021 %>%
   geom_waffle(tile_shape = "circle") +
   theme_void()
 ```
+
 ```{r}
 # create color scheme
-exports <- c("Sunflower Oil" = alpha(dark_yellow, 0.7),
+exports <- c("Sunflower Oil" = alpha(light_yellow, 0.7),
              "Maize" = alpha("#007756",0.7),
              "Wheat" = alpha("#846E54",0.7),
              "Rapeseed" = alpha("#6d7700", 0.7),
@@ -524,14 +524,24 @@ wheat_backup <- "#00770a"
 # adjust data
 uki_agri_2021 <- uki_agri_2021 %>% 
   mutate(value_billions = value/100000000,
-         tonnes_millions = tonnes/1000000)
+         tonnes_millions = tonnes/1000000) %>% 
+  mutate(n_squares = round(fraction * 100),
+       remainder = (fraction * 100) - floor(fraction * 100)) %>%
+arrange(desc(remainder)) %>%
+mutate(n_squares = floor(fraction * 100) + 
+         if_else(row_number() <= 100 - sum(floor(fraction * 100)), 1L, 0L)) %>% 
+  mutate(export = factor(export, levels = c("Sunflower Oil", "Maize", "Wheat", "Rapeseed", "Barley"))) %>% 
+  
+  # forces the order!
+  arrange(export)
+
 
 showtext_auto(enable = TRUE)
 
 # uki agri exports in value of US dollars
-ggplot(uki_agri_2021, aes(fill = reorder(export, -value_billions), values = value_billions)) + 
+ggplot(uki_agri_2021, aes(fill = reorder(export, -value_billions), values = n_squares)) + 
   waffle::geom_waffle(n_rows = 10, radius = unit(0.5, "npc"), size = 0,
-                      flip = TRUE) +
+                      flip = TRUE, make_proportional = FALSE) +
   labs(fill = " ",
        title = "Main Export Products in 2021 (USD)",
        subtitle = "Sunflower oil was the highest-valued export at $6.4 billion.",
@@ -599,7 +609,6 @@ exports_mass + exports_value +
 showtext_auto(enable = FALSE)
 ```
 
-
 ```{r}
 # uki agri exports in tonnes
 
@@ -609,7 +618,6 @@ ggplot(uki_agri_2021, aes(fill = reorder(export, -tonnes), values = tonnes)) +
   coord_equal() +
   theme_waffle()
 ```
-
 
 ```{r}
 df <- data.frame(
@@ -636,7 +644,6 @@ ggplot(df, aes(fill = export, values = value)) +
   theme(legend.position = "bottom")
 
 ```
-
 
 ## Final Questions
 
