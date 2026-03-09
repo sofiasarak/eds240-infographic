@@ -150,10 +150,10 @@ sunflower_prod <- tribble(
   ~year, ~prod,
   "2020/21", 13900 * 1000,
   "2021/22", 16900 * 1000,
-  "2022/2023", 12680 * 1000,
-  "2023/2024", 15100 * 1000,
-  "2024/2025", 12100 * 1000,
-  "2025/2026", 11400 * 1000
+  "2022/23", 12680 * 1000,
+  "2023/24", 15100 * 1000,
+  "2024/25", 12100 * 1000,
+  "2025/26", 11400 * 1000
 )
 
 
@@ -190,7 +190,7 @@ honey_bronze <- "#F5AC45"
 baltic_blue <- "#015E7C"
 tropical_teal <- "#00AFB5"
 
-lighter_yellow <- "#FFF6B1"
+reticulate::py_install("pyyaml")reticulate::py_install("pyyaml")
 ```
 
 ### Plot Type 1: Area Charts
@@ -233,8 +233,8 @@ sunflower_oil %>%
                                   size = rel(0.99),
                                   margin = margin(b = 7)),
         plot.subtitle = ggtext::element_markdown(family = "roboto", size = rel(0.70)),
-        axis.text.y.right = element_text(family = "geist_mono", size = rel(0.65), margin = margin(l = -15)),
-        axis.text.x = element_text(family = "geist_mono", size = rel(0.65)),
+        axis.text.y.right = element_text(family = "geist_mono", size = rel(0.8), margin = margin(l = -15)),
+        axis.text.x = element_text(family = "geist_mono", size = rel(0.8)),
         plot.caption = element_text(family = "roboto",
                                     margin = margin(t = 5),
                                     size = rel(0.45)),
@@ -243,7 +243,7 @@ sunflower_oil %>%
         # panel.grid.minor.y = element_line(color = alpha("gray50", 0.5))) +
    scale_x_continuous(breaks = c(1995, 2000, 2005, 2010, 2015, 2020))
 
-ggsave("sunflower_oil_area.pdf", width  = 10)
+ggsave("sunflower_oil_area_2.pdf", width  = 8)
 
 showtext_auto(enable = FALSE)
 ```
@@ -285,8 +285,8 @@ sunflower_seeds %>%
                                   size = rel(0.99),
                                   margin = margin(b = 7)),
         plot.subtitle = ggtext::element_markdown(family = "roboto", size = rel(0.70)),
-        axis.text.y.right = element_text(family = "geist_mono", size = rel(0.65), margin = margin(l = -15)),
-        axis.text.x = element_text(family = "geist_mono", size = rel(0.65)),
+        axis.text.y.right = element_text(family = "geist_mono", size = rel(0.85), margin = margin(l = -15)),
+        axis.text.x = element_text(family = "geist_mono", size = rel(0.85)),
         plot.caption = element_text(family = "roboto",
                                     margin = margin(t = 5),
                                     size = rel(0.45)),
@@ -295,7 +295,7 @@ sunflower_seeds %>%
         # panel.grid.minor.y = element_line(color = alpha("gray50", 0.5))) +
    scale_x_continuous(breaks = c(1995, 2000, 2005, 2010, 2015, 2020))
 
-ggsave("sunflower_seed_area.pdf", width  = 10)
+#ggsave("sunflower_seed_area_2.pdf")
 
 showtext_auto(enable = FALSE)
 ```
@@ -327,8 +327,8 @@ sunflower_seeds %>%
                                   size = rel(0.99),
                                   margin = margin(b = 7)),
         plot.subtitle = element_text(family = "roboto", size = rel(0.70)),
-        axis.text.y.right = element_text(family = "geist_mono", size = rel(0.65), margin = margin(l = -15)),
-        axis.text.x = element_text(family = "geist_mono", size = rel(0.65)),
+        axis.text.y.right = element_text(family = "geist_mono", size = rel(0.8), margin = margin(l = -15)),
+        axis.text.x = element_text(family = "geist_mono", size = rel(0.8)),
         plot.caption = element_text(family = "roboto",
                                     margin = margin(t = 20),
                                     size = rel(0.45)),
@@ -336,6 +336,8 @@ sunflower_seeds %>%
         axis.title.y.right = element_text(family = "roboto", size = rel(0.60), margin = margin(l = 15))) +
   scale_y_continuous(position = "right") +
    scale_x_continuous(breaks = c(1995, 2000, 2005, 2010, 2015, 2020))
+
+ggsave("larger_axis_text_area_3.pdf", width = 8)
 
 showtext_auto(enable = FALSE)
 ```
@@ -368,15 +370,15 @@ ggplot(aes(x = year, y = prod_millions)) +
                                   size = rel(0.99),
                                   margin = margin(b = 7)),
         plot.subtitle = element_text(family = "roboto", size = rel(0.70)),
-        axis.text.y = element_text(hjust = 0, family = "geist_mono", size = rel(0.65)),
-        axis.text.x = element_text(family = "geist_mono", size = rel(0.65)),
+        axis.text.y = element_text(hjust = 0, family = "geist_mono", size = rel(0.85)),
+        axis.text.x = element_text(family = "geist_mono", size = rel(0.85)),
         axis.title = element_text(family = "roboto", size = rel(0.7)),
         plot.caption = element_text(family = "roboto",
                                     margin = margin(t = 20),
                                     size = rel(0.45)),
         plot.caption.position = "plot")
 
-ggsave("prod_bar.pdf", width  = 8)
+#ggsave("prod_bar.pdf", width  = 8)
 
 showtext_auto(enable = FALSE)
 
@@ -400,20 +402,26 @@ knitr::include_graphics("images/sunflower1.png")
 #|fig-alt: "Map of Ukraine with oblasts colored by the number of sunflower farms. There tend to be more sunflower farms in southeast Ukraine, possibly due to warmer climate."
 showtext_auto(enable = TRUE)
 
+sunflower_region <- sunflower_region %>% 
+  mutate(number_k = Number/10)
+
 ggplot(data = sunflower_region) +
   geom_sf(aes(fill = Number), color = "white") +
-  labs(title = "Number of sunflower farms by oblast",
-       subtitle = "There tend to be more sunflower farms in southeast Ukraine,\npossibly due to warmer climate.",
+  labs(title = "Number of sunflower farms",
+       #subtitle = "There tend to be more sunflower farms in southeast Ukraine,\npossibly due to warmer climate.",
        fill = " ",
        caption = "Data Source: OneSoil.ai") +
-  guides(fill = guide_colorbar( #direction = "horizontal",
+  guides(fill = guide_colorbar(direction = "horizontal",
                                title.position = "top",
-                               barheight = 8)) +
+                               barheight = 0.75,
+                               position = "bottom",
+                               barwidth = 9)) +
    theme_void(base_size = 17) +
   # theme(legend.position = "bottom") +
-  scale_fill_continuous(high = "#E7B030", low = platinum, na.value = "#cbe1f5",
-                        labels = scales::label_number(scale = 1e-5, suffix = " million")) +
-  theme(plot.margin = margin(t = 1, r = 1, b = 1, l = 1, unit = "cm"),
+  scale_fill_continuous(high = "#E7B030", low = platinum, na.value = alpha("#846E54", 0.25),
+                        labels = scales::label_number(scale = 1e-2, suffix = " thousand")) +
+  theme(plot.background = element_rect(fill = "#B1D7FF"),
+        plot.margin = margin(t = 1, r = 1, b = 1, l = 1, unit = "cm"),
         plot.title = element_text(family = "libre",
                                   size = rel(0.99),
                                   margin = margin(b = 7)),
@@ -424,32 +432,38 @@ ggplot(data = sunflower_region) +
         plot.caption = element_text(family = "roboto",
                                     margin = margin(t = 20),
                                     size = rel(0.45)),
-        plot.caption.position = "plot") +
+        plot.caption.position = "plot") 
   
   # add no data legend
-  annotate("rect", xmin = 38.5, xmax = 39.5, ymin = 45.6, ymax = 45.9, fill = "#cbe1f5") +
-  annotate("text", x = 38.5, y = 45.3, label = "No Data", hjust = 0, size = 3.1, family = "geist_mono")
+  #annotate("rect", xmin = 38.5, xmax = 39.5, ymin = 45.6, ymax = 45.9, fill = "#cbe1f5") +
+  #annotate("text", x = 38.5, y = 45.3, label = "No Data", hjust = 0, size = 3.1, family = "geist_mono")
+
+ggsave("number_choropleth_2.pdf")
 
 showtext_auto(enable = FALSE)
 ```
 
 ```{r}
 #|fig-alt: "Map of Ukraine with oblasts colored by sunflower farm area. There tends to be more area allocated to sunflower production in southeast Ukraine, possibly due to warmer climate."
+
 showtext_auto(enable = TRUE)
 
 ggplot(data = sunflower_region) +
   geom_sf(aes(fill = Size), color = "white") +
   labs(title = "Size of sunflower farms in hectares",
-       subtitle = "Sunflower farms tend to cover more area in southeast Ukraine,\npossibly due to warmer climate.",
+       # subtitle = "Sunflower farms tend to cover more area in southeast Ukraine,\npossibly due to warmer climate.",
        fill = " ",
        caption = "Data Source: OneSoil.ai") +
-  guides(fill = guide_colorbar( #direction = "horizontal",
+  guides(fill = guide_colorbar(direction = "horizontal",
                                title.position = "top",
-                               barheight = 8)) +
+                               barheight = 0.75,
+                               position = "bottom",
+                               barwidth = 9)) +
    theme_void(base_size = 17) +
-  scale_fill_continuous(high = "#E7B030", low = platinum, na.value = "#cbe1f5",
-                        labels = scales::label_number(scale = 1e-5, suffix = " million")) +
-  theme(plot.margin = margin(t = 1, r = 1, b = 1, l = 1, unit = "cm"),
+  scale_fill_continuous(high = "#E7B030", low = platinum, na.value = alpha("#846E54", 0.25),
+                        labels = scales::label_number(scale = 1e-5, suffix = " ")) +
+  theme(plot.background = element_rect(fill = "#B1D7FF"),
+       plot.margin = margin(t = 1, r = 1, b = 1, l = 1, unit = "cm"),
         plot.title = element_text(family = "libre",
                                   size = rel(0.99),
                                   margin = margin(b = 7)),
@@ -460,12 +474,13 @@ ggplot(data = sunflower_region) +
         plot.caption = element_text(family = "roboto",
                                     margin = margin(t = 20),
                                     size = rel(0.45)),
-        plot.caption.position = "plot") +
+        plot.caption.position = "plot") 
   
   # add no data legend
-  annotate("rect", xmin = 38.5, xmax = 39.5, ymin = 45.6, ymax = 45.9, fill = "#cbe1f5") +
-  annotate("text", x = 38.5, y = 45.3, label = "No Data", hjust = 0, size = 3.1, family = "geist_mono")
+  #annotate("rect", xmin = 38.5, xmax = 39.5, ymin = 45.6, ymax = 45.9, fill = "#cbe1f5") +
+  #annotate("text", x = 38.5, y = 45.3, label = "No Data", hjust = 0, size = 3.1, family = "geist_mono")
 
+ggsave("size_choropleth_2.pdf")
 
 showtext_auto(enable = FALSE)
 ```
@@ -510,11 +525,11 @@ uki_agri_2021 %>%
 
 ```{r}
 # create color scheme
-exports <- c("Sunflower Oil" = alpha(light_yellow, 0.7),
-             "Maize" = alpha("#007756",0.7),
-             "Wheat" = alpha("#846E54",0.7),
-             "Rapeseed" = alpha("#6d7700", 0.7),
-             "Barley" = alpha("#442824", 0.7))
+exports <- c("Sunflower Oil" = alpha(light_yellow, 1),
+             "Maize" = alpha(dark_yellow,1),
+             "Wheat" = alpha("#846E54",1),
+             "Rapeseed" = alpha("#442824", 1),
+             "Barley" = alpha("#007756", 1))
 
 
 barely_backup <- "#776100"
@@ -524,7 +539,8 @@ wheat_backup <- "#00770a"
 # adjust data
 uki_agri_2021 <- uki_agri_2021 %>% 
   mutate(value_billions = value/100000000,
-         tonnes_millions = tonnes/1000000) %>% 
+         tonnes_millions = tonnes/1000000,
+         fraction = value_billions/(sum(value_billions))) %>% 
   mutate(n_squares = round(fraction * 100),
        remainder = (fraction * 100) - floor(fraction * 100)) %>%
 arrange(desc(remainder)) %>%
@@ -543,11 +559,11 @@ ggplot(uki_agri_2021, aes(fill = reorder(export, -value_billions), values = n_sq
   waffle::geom_waffle(n_rows = 10, radius = unit(0.5, "npc"), size = 0,
                       flip = TRUE, make_proportional = FALSE) +
   labs(fill = " ",
-       title = "Main Export Products in 2021 (USD)",
-       subtitle = "Sunflower oil was the highest-valued export at $6.4 billion.",
+       title = "Ukraine's Top Export Products in 2021 (USD)",
+       #subtitle = "Sunflower oil was the highest-valued export at $6.4 billion.",
        caption = "Data Source: European Parliamentary Data Service") +
   coord_equal() +
-  theme_void() +
+  theme_void(base_size = 17) +
   theme(plot.background = element_rect(fill = "#B1D7FF"),
         plot.title = element_text(family = "libre",
                                   size = rel(0.99),
@@ -560,11 +576,11 @@ ggplot(uki_agri_2021, aes(fill = reorder(export, -value_billions), values = n_sq
                                     margin = margin(t = 2, b = 5),
                                     size = rel(0.45)),
         plot.caption.position = "plot",
-        legend.position = "bottom",
+        legend.position = "none",
         legend.key.size = unit(0.3, "cm")) +
   scale_discrete_manual(values = exports, aesthetics = "fill") 
 
-ggsave("waffle_chart.pdf")
+ggsave("waffle_chart_bright.pdf")
 
 showtext_auto(enable = FALSE)
 ```
