@@ -4,7 +4,7 @@ This repository contains the code to make the charts embedded within the followi
 
 ![](images/infographic.jpg)
 
-Being Ukrainian myself, I intended to make this infographic a celebration of Ukrainian culture, as well as a highlight of its influence on the European economy. A full description of my thought process can be found on [my personal website blog]().
+Being Ukrainian myself, I intended to make this infographic a celebration of Ukrainian culture, as well as a highlight of its influence on the European economy. A full description of my thought process can be found on [my personal website blog](https://sofiasarak.github.io/blog/ukrainian-sunflowers-infographic/).
 
 ## Data Sources:
 - **Yearly Sunflower Seed Production:** [National Sunflower Association](https://www.sunflowernsa.com/stats/world-supply/)
